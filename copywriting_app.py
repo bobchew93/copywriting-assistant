@@ -5,13 +5,10 @@ import requests
 st.title("AI-Powered Copywriting Assistant")
 st.write("Generate high-quality copy in seconds!")
 
-# Sidebar for settings
-st.sidebar.title("Settings")
-tone = st.sidebar.selectbox("Choose a tone:", ["professional", "casual", "persuasive"])
-format = st.sidebar.selectbox("Choose a format:", ["email", "social media post", "blog post"])
-
-# Main app input
+# Input fields
 topic = st.text_input("Enter a topic:")
+tone = st.selectbox("Choose a tone:", ["professional", "casual", "persuasive"])
+format = st.selectbox("Choose a format:", ["email", "social media post", "blog post"])
 
 # Replace with your actual DeepSeek API key
 api_key = "sk-39d698f1967845efbaa666261421db4f"  # Replace with your actual API key
