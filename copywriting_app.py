@@ -10,8 +10,8 @@ topic = st.text_input("Enter a topic:")
 tone = st.selectbox("Choose a tone:", ["professional", "casual", "persuasive"])
 format = st.selectbox("Choose a format:", ["email", "social media post", "blog post"])
 
-# Replace with your actual DeepSeek API key
-api_key = "sk-39d698f1967845efbaa666261421db4f"  # Replace with your actual API key
+# Get API key from Streamlit secrets
+api_key = st.secrets["deepseek_api_key"]
 url = "https://api.deepseek.com/v1/chat/completions"
 
 # Set up the headers with your API key
@@ -21,19 +21,14 @@ headers = {
 }
 
 def generate_copy(prompt):
-    # Define the data for your request
     data = {
         "model": "deepseek-chat",
         "messages": [
             {"role": "user", "content": prompt}
         ],
-        "max_tokens": 500  # Increased to allow longer responses
+        "max_tokens": 500
     }
-
-    # Make the API request
     response = requests.post(url, headers=headers, json=data)
-
-    # Check if the request was successful
     if response.status_code == 200:
         return response.json()["choices"][0]["message"]["content"]
     else:
@@ -44,20 +39,17 @@ if st.button("Generate Copy"):
     if not topic:
         st.warning("Please enter a topic.")
     else:
-        # Modify the prompt based on the format
         if format.lower() == "email":
             prompt = f"Write a {tone} personality-driven email to promote {topic}."
         elif format.lower() == "social media post":
             prompt = f"Write a {tone} social media post about {topic}."
         elif format.lower() == "blog post":
             prompt = f"Write a {tone} blog post about {topic}."
-
-        # Generate and display the copy
+            
         copy = generate_copy(prompt)
         st.subheader("Generated Copy:")
         st.write(copy)
-
-        # Save the generated copy to a file with UTF-8 encoding
+        
         with open("generated_copy.txt", "a", encoding="utf-8") as file:
             file.write(f"Prompt: {prompt}\n")
             file.write(f"Generated Copy:\n{copy}\n")
