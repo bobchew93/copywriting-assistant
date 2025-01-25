@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import time
 
 # Set up the Streamlit app
 st.title("AI-Powered Copywriting Assistant")
@@ -7,7 +8,7 @@ st.write("Generate high-quality copy in seconds!")
 
 # Input fields
 topic = st.text_input("Enter a topic:")
-tone = st.selectbox("Choose a tone:", ["professional", "casual", "persuasive"])
+tone = st.selectbox("Choose a tone:", ["Formal", "Casual", "Persuasive", "Funny", "Inspirational"])
 format = st.selectbox("Choose a format:", ["email", "social media post", "blog post"])
 
 # Get API key from Streamlit secrets
@@ -46,14 +47,18 @@ if st.button("Generate Copy"):
     else:
         # Define the prompt based on the selected format
         if format.lower() == "email":
-            prompt = f"Write a {tone} personality-driven email to promote {topic}."
+            prompt = f"Write a {tone.lower()} personality-driven email to promote {topic}."
         elif format.lower() == "social media post":
-            prompt = f"Write a {tone} social media post about {topic}."
+            prompt = f"Write a {tone.lower()} social media post about {topic}."
         elif format.lower() == "blog post":
-            prompt = f"Write a {tone} blog post about {topic}."
+            prompt = f"Write a {tone.lower()} blog post about {topic}."
 
         # Generate the copy using the API
-        with st.spinner("Generating copy..."):  # Show a loading spinner
+        with st.spinner("Generating copy..."):
+            progress_bar = st.progress(0)
+            for percent_complete in range(100):
+                time.sleep(0.01)  # Simulate a delay
+                progress_bar.progress(percent_complete + 1)
             copy = generate_copy(prompt)
 
         # Display the generated copy
