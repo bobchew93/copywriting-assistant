@@ -4,7 +4,7 @@ import time
 
 # Set up the Streamlit app
 st.title("Bob's Copywriting Assistant")  # Updated title
-st.write("Generate high-quality copy in seconds!")
+st.write("Generate high-quality copy in seconds.")
 
 # Input fields
 topic = st.text_input("Enter a topic:")
