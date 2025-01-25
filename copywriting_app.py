@@ -11,7 +11,11 @@ tone = st.selectbox("Choose a tone:", ["professional", "casual", "persuasive"])
 format = st.selectbox("Choose a format:", ["email", "social media post", "blog post"])
 
 # Get API key from Streamlit secrets
-api_key = st.secrets["deepseek_api_key"]
+api_key = st.secrets.get("deepseek_api_key")
+if not api_key:
+    st.error("API key not found. Please check your Streamlit secrets configuration.")
+    st.stop()
+
 url = "https://api.deepseek.com/v1/chat/completions"
 
 # Set up the headers with your API key
@@ -28,29 +32,43 @@ def generate_copy(prompt):
         ],
         "max_tokens": 500
     }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
+    try:
+        response = requests.post(url, headers=headers, json=data, timeout=10)  # Add timeout
+        response.raise_for_status()  # Raise an error for bad status codes
         return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"Error: {response.status_code}\n{response.text}"
+    except requests.exceptions.RequestException as e:
+        return f"Error: {e}"
 
 # Generate copy when the user clicks the button
 if st.button("Generate Copy"):
-    if not topic:
-        st.warning("Please enter a topic.")
+    if not topic or not tone or not format:
+        st.warning("Please fill out all fields.")
     else:
+        # Define the prompt based on the selected format
         if format.lower() == "email":
             prompt = f"Write a {tone} personality-driven email to promote {topic}."
         elif format.lower() == "social media post":
             prompt = f"Write a {tone} social media post about {topic}."
         elif format.lower() == "blog post":
             prompt = f"Write a {tone} blog post about {topic}."
-            
-        copy = generate_copy(prompt)
-        st.subheader("Generated Copy:")
-        st.write(copy)
-        
-        with open("generated_copy.txt", "a", encoding="utf-8") as file:
-            file.write(f"Prompt: {prompt}\n")
-            file.write(f"Generated Copy:\n{copy}\n")
-            file.write("=" * 50 + "\n\n")
+
+        # Generate the copy using the API
+        with st.spinner("Generating copy..."):  # Show a loading spinner
+            copy = generate_copy(prompt)
+
+        # Display the generated copy
+        if copy.startswith("Error:"):
+            st.error(copy)  # Show error message in red
+        else:
+            st.subheader("Generated Copy:")
+            st.write(copy)
+
+            # Save the generated copy to a file
+            try:
+                with open("generated_copy.txt", "a", encoding="utf-8") as file:
+                    file.write(f"Prompt: {prompt}\n")
+                    file.write(f"Generated Copy:\n{copy}\n")
+                    file.write("=" * 50 + "\n\n")
+                st.success("Copy saved successfully!")  # Show success message
+            except Exception as e:
+                st.error(f"Failed to save copy: {e}")
