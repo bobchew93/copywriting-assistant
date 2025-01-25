@@ -9,7 +9,7 @@ st.write("Generate high-quality copy in seconds!")
 # Input fields
 topic = st.text_input("Enter a topic:")
 tone = st.selectbox("Choose a tone:", ["Formal", "Casual", "Persuasive", "Funny", "Inspirational"])
-format = st.selectbox("Choose a format:", ["Email", "Facebook post", "Whatapps"])
+format = st.selectbox("Choose a format:", ["Email", "Facebook post", "Blog post"])
 
 # Get API key from Streamlit secrets
 api_key = st.secrets.get("deepseek_api_key")
