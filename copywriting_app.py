@@ -33,7 +33,7 @@ def generate_copy(prompt):
         "max_tokens": 500
     }
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=10)  # Add timeout
+        response = requests.post(url, headers=headers, json=data, timeout=30)  # Add timeout
         response.raise_for_status()  # Raise an error for bad status codes
         return response.json()["choices"][0]["message"]["content"]
     except requests.exceptions.RequestException as e:
@@ -70,5 +70,13 @@ if st.button("Generate Copy"):
                     file.write(f"Generated Copy:\n{copy}\n")
                     file.write("=" * 50 + "\n\n")
                 st.success("Copy saved successfully!")  # Show success message
+
+                # Add a download button
+                st.download_button(
+                    label="Download Copy",
+                    data=copy,
+                    file_name="generated_copy.txt",
+                    mime="text/plain"
+                )
             except Exception as e:
                 st.error(f"Failed to save copy: {e}")
