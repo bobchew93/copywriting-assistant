@@ -132,6 +132,11 @@ if st.button("Generate Copy"):
             st.subheader("Generated Copy:")
             st.write(result)
 
-# Footer
+# Footer with humor
 st.markdown("---")
-st.markdown("Built by Bob Chew")
+st.markdown("""
+Have fun writing nonsense! No AI was harmed in the making of this app.
+
+Built by me (Bob Chew, who takes no responsibility for your weird posts)
+""")
+
