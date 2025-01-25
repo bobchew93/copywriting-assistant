@@ -41,21 +41,13 @@ def read_file(file):
 
 # Upload section for examples
 st.subheader("Upload Examples (Optional)")
+
 uploaded_files = st.file_uploader(
-    "Upload emails/posts as text files (.txt), Word documents (.docx), or PDFs (.pdf)",
+    "Upload emails/posts/your love letter below...",
     type=['txt', 'docx', 'pdf'],
     accept_multiple_files=True,
-    help="Upload up to 15 files that represent your writing style"
+    help="Upload up to 15 files • TXT, DOCX, PDF • Under 5MB per file recommended"  # Updated help text
 )
-
-if uploaded_files:
-    st.session_state.example_texts = []
-    for uploaded_file in uploaded_files:
-        file_content = read_file(uploaded_file)
-        if file_content:
-            st.session_state.example_texts.append(file_content)
-    st.write(f"✓ {len(st.session_state.example_texts)} examples uploaded")
-
 # Add contextual inputs
 st.subheader("Tell me about yourself...")
 personal_context = st.text_area(
