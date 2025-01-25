@@ -3,7 +3,7 @@ import requests
 import time
 
 # Set up the Streamlit app
-st.title("Bob Powered Copywriting Assistant")  # Updated title
+st.title("Bob's Copywriting Assistant")  # Updated title
 st.write("Generate high-quality copy in seconds!")
 
 # Input fields
