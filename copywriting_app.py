@@ -15,12 +15,12 @@ personal_context = st.text_area(
 
 # Additional context for specific content
 content_context = st.text_area(
-    "Any specific context for this piece? (recent events, background info, goals, etc):",
+    "Any specific context for this piece? (target audience, recent events, background info, goals, etc):",
     help="Additional context helps create more relevant and targeted content"
 )
 
 # Regular input fields
-topic = st.text_input("Enter a topic:")
+topic = st.text_input("Enter a topic (what do you wanna talk about?):")
 format = st.selectbox("Choose a format:", [
     "Facebook Post",
     "Email"
