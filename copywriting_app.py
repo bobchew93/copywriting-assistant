@@ -1,32 +1,80 @@
 import streamlit as st
 import requests
 import time
+from io import StringIO
+from docx import Document  # For Word file support
+import PyPDF2  # For PDF file support
 
 # Set up the Streamlit app
 st.title("Bob's Copywriting Assistant")
 st.write("Generate authentic, personality-driven copy that matches your style.")
 
-# Context collection section
+# Ensure API key is set up
+try:
+    api_key = st.secrets["deepseek_api_key"]
+except KeyError:
+    api_key = None
+    st.warning("API key not found. Please configure your Streamlit secrets to use the API.")
+
+# Initialize session state for storing uploaded text
+if 'example_texts' not in st.session_state:
+    st.session_state.example_texts = []
+
+# Function to read files
+def read_file(file):
+    """Extract text from uploaded files (txt, docx, pdf)."""
+    if file.name.endswith(".txt"):
+        # Read plain text files
+        return StringIO(file.getvalue().decode("utf-8")).read()
+    elif file.name.endswith(".docx"):
+        # Read Word files
+        doc = Document(file)
+        full_text = [p.text for p in doc.paragraphs]
+        return '\n'.join(full_text)
+    elif file.name.endswith(".pdf"):
+        # Read PDFs
+        pdf_reader = PyPDF2.PdfReader(file)
+        full_text = [page.extract_text() for page in pdf_reader.pages]
+        return '\n'.join(full_text)
+    else:
+        return None
+
+# Upload section for examples
+st.subheader("Upload Examples (Optional)")
+uploaded_files = st.file_uploader(
+    "Upload emails/posts as text files (.txt), Word documents (.docx), or PDFs (.pdf)",
+    type=['txt', 'docx', 'pdf'],
+    accept_multiple_files=True,
+    help="Upload up to 15 files that represent your writing style"
+)
+
+if uploaded_files:
+    st.session_state.example_texts = []
+    for uploaded_file in uploaded_files:
+        file_content = read_file(uploaded_file)
+        if file_content:
+            st.session_state.example_texts.append(file_content)
+    st.write(f"✓ {len(st.session_state.example_texts)} examples uploaded")
+
+# Add contextual inputs
 st.subheader("Tell me about yourself...")
 personal_context = st.text_area(
-    "Share relevant context about yourself and your brand voice (writing style, common phrases, tone, etc):",
-    help="The more context you provide, the better I can match your voice"
+    "Share relevant context about yourself and your brand voice (writing style, common phrases, tone, etc):"
 )
 
-# Additional context for specific content
 content_context = st.text_area(
-    "Any specific context for this piece? (target audience, recent events, background info, goals, etc):",
-    help="Additional context helps create more relevant and targeted content"
+    "Any specific context for this piece? (target audience, recent events, background info, goals, etc):"
 )
 
-# Regular input fields
+# Topic and customization
 topic = st.text_input("Enter a topic (what do you wanna talk about?):")
 format = st.selectbox("Choose a format:", [
     "Facebook Post",
-    "Email"
+    "Email",
+    "LinkedIn Post",
+    "Tweet"
 ])
 
-# Add tone selection
 tone = st.selectbox("Choose a tone:", [
     "Casual",
     "Persuasive",
@@ -34,96 +82,64 @@ tone = st.selectbox("Choose a tone:", [
     "Inspirational"
 ])
 
-# Get API key from Streamlit secrets
-api_key = st.secrets.get("deepseek_api_key")
-if not api_key:
-    st.error("API key not found. Please check your Streamlit secrets configuration.")
-    st.stop()
-
-url = "https://api.deepseek.com/v1/chat/completions"
-headers = {
-    "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json"
-}
-
-def generate_copy(prompt, personal_style, specific_context):
+# Function to generate copy
+def generate_copy(prompt, personal_style, specific_context, examples=[]):
+    """Generate copy based on user input and examples."""
+    examples_prompt = "\nWriting examples for reference:\n" if examples else ""
+    for i, example in enumerate(examples, 1):
+        examples_prompt += f"Example {i}:\n{example[:300]}...\n"  # Limit example text length
+    
     system_prompt = f"""
     Personal Style Context:
     {personal_style}
-
     Specific Content Context:
     {specific_context}
-
+    {examples_prompt}
     Style Guidelines:
     - Write in a natural, conversational tone
-    - Do not use emojis or special formatting
-    - Avoid numbered/bullet lists unless specifically requested
-    - Keep the writing style authentic and human-like
-    - Write as if having a casual conversation
-    - Use natural paragraph breaks instead of formatting
-    - Focus on storytelling and genuine expression
-    
-    Please write in the authentic voice described above while incorporating the specific context provided.
+    - Avoid emojis and special formatting
+    - Authentic, human-like storytelling
+    Please generate content in the described tone and style.
     """
-    
-    data = {
-        "model": "deepseek-chat",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        "max_tokens": 750
-    }
-    
+
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=30)
+        data = {
+            "model": "deepseek-chat",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 750
+        }
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=data,
+            timeout=30
+        )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
-    except requests.exceptions.RequestException as e:
-        return f"Error: {e}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
-# Generate copy when the user clicks the button
+# Generate Copy Button
 if st.button("Generate Copy"):
-    if not topic:
+    if not api_key:
+        st.warning("Cannot generate copy: API key is missing.")
+    elif not topic.strip():
         st.warning("Please enter a topic.")
     else:
-        # Enhanced prompt templates based on format and tone
-        if format == "Facebook Post":
-            prompt = f"Write a {tone.lower()} Facebook post about {topic}. Make it conversational and authentic, avoiding emojis and heavy formatting. Write as if you're naturally sharing thoughts with friends. Focus on storytelling and genuine expression."
-        elif format == "Email":
-            prompt = f"Write a {tone.lower()} email about {topic}. Keep it personal and valuable, avoiding any emojis or heavy formatting. Write as if you're having a direct conversation with the reader. Focus on natural flow and authentic communication."
-            
-        # Generate the copy using the API
         with st.spinner("Creating your personalized content..."):
-            progress_bar = st.progress(0)
-            for percent_complete in range(100):
-                time.sleep(0.01)
-                progress_bar.progress(percent_complete + 1)
-            copy = generate_copy(prompt, personal_context, content_context)
-            
-        # Display the generated copy
-        if copy.startswith("Error:"):
-            st.error(copy)
+            prompt = f"Write a {tone.lower()} {format.lower()} about {topic}."
+            result = generate_copy(prompt, personal_context, content_context, st.session_state.example_texts)
+        
+        # Display generated copy
+        if result.startswith("Error:"):
+            st.error(result)
         else:
             st.subheader("Generated Copy:")
-            st.write(copy)
-            
-            # Save the generated copy to a file
-            try:
-                with open("generated_copy.txt", "a", encoding="utf-8") as file:
-                    file.write(f"Prompt: {prompt}\n")
-                    file.write(f"Personal Context: {personal_context}\n")
-                    file.write(f"Content Context: {content_context}\n")
-                    file.write(f"Generated Copy:\n{copy}\n")
-                    file.write("=" * 50 + "\n\n")
-                st.success("Copy saved successfully!")
-                
-                # Add a download button
-                st.download_button(
-                    label="Download Copy",
-                    data=copy,
-                    file_name="generated_copy.txt",
-                    mime="text/plain"
-                )
-            except Exception as e:
-                st.error(f"Failed to save copy: {e}")
+            st.write(result)
+
+# Footer
+st.markdown("---")
+st.markdown("Built by Bob Chew")
