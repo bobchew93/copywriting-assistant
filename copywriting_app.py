@@ -54,6 +54,15 @@ def generate_copy(prompt, personal_style, specific_context):
     Specific Content Context:
     {specific_context}
 
+    Style Guidelines:
+    - Write in a natural, conversational tone
+    - Do not use emojis or special formatting
+    - Avoid numbered/bullet lists unless specifically requested
+    - Keep the writing style authentic and human-like
+    - Write as if having a casual conversation
+    - Use natural paragraph breaks instead of formatting
+    - Focus on storytelling and genuine expression
+    
     Please write in the authentic voice described above while incorporating the specific context provided.
     """
     
@@ -80,9 +89,9 @@ if st.button("Generate Copy"):
     else:
         # Enhanced prompt templates based on format and tone
         if format == "Facebook Post":
-            prompt = f"Write a {tone.lower()} Facebook post about {topic}. Make it conversational and authentic while incorporating any specific context provided."
+            prompt = f"Write a {tone.lower()} Facebook post about {topic}. Make it conversational and authentic, avoiding emojis and heavy formatting. Write as if you're naturally sharing thoughts with friends. Focus on storytelling and genuine expression."
         elif format == "Email":
-            prompt = f"Write a {tone.lower()} email about {topic}. Keep it personal and valuable while incorporating any specific context provided."
+            prompt = f"Write a {tone.lower()} email about {topic}. Keep it personal and valuable, avoiding any emojis or heavy formatting. Write as if you're having a direct conversation with the reader. Focus on natural flow and authentic communication."
             
         # Generate the copy using the API
         with st.spinner("Creating your personalized content..."):
